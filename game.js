@@ -8,6 +8,9 @@ const ctx = canvas.getContext('2d')
 
 t = 0 // tempo 
 
+
+////// COMPONENTS //////
+
 // BACKGROUND
 const back = {
 	Xi: 115,  // posição inical de recorte
@@ -79,6 +82,63 @@ const messageGetReady = {
 
 }
 
+// SCOREboard
+
+const scoreBoard = {
+	Xi: 123,  // posição inical de recorte
+	Yi: 241,
+	w: 226, // tamanho do recorte
+	h: 180,
+	Xp: canvas.width/2 - 226/2,  // posição de colagem
+	Yp: canvas.height/2 - 180/2,
+	score: 80,
+
+	draw() {
+		ctx.drawImage(
+		sprites, 
+		scoreBoard.Xi, scoreBoard.Yi,
+		scoreBoard.w, scoreBoard.h,
+		scoreBoard.Xp, scoreBoard.Yp,
+		scoreBoard.w, scoreBoard.h, //dimenções da colagem
+		)
+	}
+
+}
+
+// MEDAL
+
+const medal = {
+	Xi: 603,  // posição inical de recorte
+	Yi: 500,
+	w: 44, // tamanho do recorte
+	h: 44,
+	Xp: 73,  // posição de colagem
+	Yp: canvas.height/2 - 46,
+	draw() {
+		ctx.drawImage(
+		sprites, 
+		medal.Xi, medal.Yi,
+		medal.w, medal.h,
+		medal.Xp, medal.Yp,
+		medal.w, medal.h, //dimenções da colagem
+		)
+	},
+	result() {
+		if (scoreBoard.score >= 100) {
+			medal.Yi = 231
+		}else if (scoreBoard.score >= 75) {
+			medal.Yi = 275
+		}else if (scoreBoard.score >= 50) {
+			medal.Yi = 319
+		}else if (scoreBoard.score >= 25){
+			medal.Yi = 363
+		}
+
+	}
+
+}
+
+
 // BIRD
 const bird = {
 	Xi: 0,  // posição inical de recorte
@@ -110,20 +170,18 @@ const bird = {
 		)
 	},
 	jump() {
-		bird.Yp -= 20
+		bird.Yp -= 30
 		t = 5
 	},
 	startScreen() {
 		bird.Yp = canvas.height/2
 	},
-	gameScreen() {
-		bird.Yp = 50
-	},
 
 }
 
+////// END COMPONENTS //////
 
-//SCREENS
+////// SCREENS //////
 
 let screenOn = {}
 function changeScreen(newScreen){
@@ -149,6 +207,7 @@ const screens = {
 		},
 		click() {
 			bird.jump()
+			t = 0
 		}
 	},
 	start: {
@@ -169,7 +228,6 @@ const screens = {
 		},
 		click() {
 			changeScreen(screens.game)
-			bird.gameScreen()
 			t = 0
 		}
 		
@@ -177,17 +235,23 @@ const screens = {
 	gameOver: {
 		draw() {
 		// desenha
-		
-		messageGetReady.draw()
-
+		scoreBoard.draw()
+		medal.draw()
+		medal.result()
 		},
 		efects() {
-			console.log('s')
+
+		},
+		click() {
+			changeScreen(screens.start)
 		}
 	}
 }
 
+////// END SCREENS //////
 
+
+//// LOOP ////
 
 function loop() {
 	t += 1 // tempo passando 
@@ -198,6 +262,8 @@ function loop() {
 		changeScreen(screens.gameOver)
 	}
 }
+
+//// END LOOP ////
 
 window.addEventListener('click',function(){
 	if (screenOn.click) {
