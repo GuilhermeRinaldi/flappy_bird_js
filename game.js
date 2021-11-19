@@ -148,9 +148,7 @@ const bird = {
 	Xp: 10,  // posição de colagem
 	Yp: 50,
 	gravity() {
-		//if (bird.Yp <= (canvas.height - floor.h - 23)) {
 		bird.Yp += 1.62*Math.pow(t/25,2)/2 //graviade da lua com tempo letargico
-		//}
 	},
 	flyng() {
 		if (t%4 == 0){
@@ -170,8 +168,12 @@ const bird = {
 		)
 	},
 	jump() {
-		bird.Yp -= 30
-		t = 5
+		y = bird.Yp
+		bird.Yp -= 10
+		if (bird.Yp >= y-30){
+			y += 10
+		}
+		t = 8
 	},
 	startScreen() {
 		bird.Yp = canvas.height/2
@@ -207,7 +209,6 @@ const screens = {
 		},
 		click() {
 			bird.jump()
-			t = 0
 		}
 	},
 	start: {
@@ -264,6 +265,7 @@ function loop() {
 }
 
 //// END LOOP ////
+
 
 window.addEventListener('click',function(){
 	if (screenOn.click) {
