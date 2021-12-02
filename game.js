@@ -1,13 +1,20 @@
-console.log('space invaders JS')
-
 const sprites = new Image()
 sprites.src = 'sprites.png'
 
 const canvas = document.querySelector('canvas')
 const ctx = canvas.getContext('2d')
 
-t = 0 // tempo 
+const hitSound = new Audio()
+hitSound.src = 'sounds/hit.wav'
 
+const jumpSound = new Audio()
+jumpSound.src = 'sounds/pulo.wav'
+
+
+const gameOverSound = new Audio()
+gameOverSound.src = 'sounds/caiu.wav'
+
+frames = 0
 
 ////// COMPONENTS //////
 
@@ -18,7 +25,7 @@ const back = {
 	w: 551, // tamanho do recorte
 	h: 204,
 	Xp: 0,  // posição de colagem
-	Yp: canvas.height - 111 - 203, 
+	Yp: canvas.height -200, 
 	draw() {
 		ctx.fillStyle = '#70c5ce' // cor de fundo
 		ctx.fillRect(0, 0, canvas.width, canvas.height)  //aplica a cor por todo o fundo
@@ -42,11 +49,8 @@ const floor = {
 	Xp: 0,  // posição de colagem
 	Yp: canvas.height - 111,
 	moving() {
-		// const repe = 201 / 2
-		// const mov = floor.Xp - 2
-		// floor.Xp = mov % repe // VER A MATEMATICA POR TRAS 
 		floor.Xp -= 2
-		if (floor.Xp == -28) {
+		if (floor.Xp <= - 112) {
 			floor.Xp = 0
 		}
 	},
@@ -82,16 +86,16 @@ const messageGetReady = {
 
 }
 
-// SCOREboard
+// SCOREBOARD
 
 const scoreBoard = {
-	Xi: 123,  // posição inical de recorte
-	Yi: 241,
+	Xi: 123,  // posição inical de  recorte
+	Yi: 278,
 	w: 226, // tamanho do recorte
 	h: 180,
 	Xp: canvas.width/2 - 226/2,  // posição de colagem
 	Yp: canvas.height/2 - 180/2,
-	score: 80,
+	score: 30,
 
 	draw() {
 		ctx.drawImage(
@@ -100,6 +104,28 @@ const scoreBoard = {
 		scoreBoard.w, scoreBoard.h,
 		scoreBoard.Xp, scoreBoard.Yp,
 		scoreBoard.w, scoreBoard.h, //dimenções da colagem
+		)
+	}
+
+}
+
+// GAMEOVER 
+
+const gameOver = {
+	Xi: 142,  // posição inical de recorte
+	Yi: 234,
+	w: 190, // tamanho do recorte
+	h: 39,
+	Xp: canvas.width/2 - 190/2,  // posição de colagem
+	Yp: canvas.height/2 - 270/2,
+
+	draw() {
+		ctx.drawImage(
+		sprites, 
+		gameOver.Xi, gameOver.Yi,
+		gameOver.w, gameOver.h,
+		gameOver.Xp, gameOver.Yp,
+		gameOver.w, gameOver.h, //dimenções da colagem
 		)
 	}
 
@@ -143,23 +169,26 @@ const medal = {
 const bird = {
 	Xi: 0,  // posição inical de recorte
 	Yi: 0,
-	w: 33, // tamanho do recorte
-	h: 23,
+	w: 35, // tamanho do recorte
+	h: 24,
 	Xp: 10,  // posição de colagem
 	Yp: 50,
+	fallTime: 0,
 	gravity() {
-		bird.Yp += 1.62*Math.pow(t/25,2)/2 //graviade da lua com tempo letargico
+		bird.fallTime += 1
+		bird.Yp += Math.pow(bird.fallTime,0.4)
 	},
-	flyng() {
-		if (t%4 == 0){
+	flapWings() {
+		if (frames % 5 == 0) {
 			bird.Yi += 26
 		}
-		if (bird.Yi == 78){
+		if (bird.Yi == 78) {
 			bird.Yi = 0
 		}
+
 	},
 	draw() {
-		ctx.drawImage(
+		ctx.drawImage( 
 		sprites, 
 		bird.Xi, bird.Yi,
 		bird.w, bird.h,
@@ -168,12 +197,18 @@ const bird = {
 		)
 	},
 	jump() {
-		y = bird.Yp
-		bird.Yp -= 10
-		if (bird.Yp >= y-30){
-			y += 10
+		jumpSound.play()
+		bird.Yp -= 50
+		bird.fallTime = 3
+
+
+	},
+	collison() {
+		//colisão com chão
+		if (bird.Yp >= (canvas.height - floor.h - 15)) { 
+			hitSound.play()
+			changeScreen(screens.gameOver)
 		}
-		t = 8
 	},
 	startScreen() {
 		bird.Yp = canvas.height/2
@@ -185,7 +220,7 @@ const bird = {
 
 ////// SCREENS //////
 
-let screenOn = {}
+let screenOn = {}	
 function changeScreen(newScreen){
 	screenOn = newScreen
 }
@@ -201,10 +236,10 @@ const screens = {
 
 		},
 		efects() {
-		// efeitos 
 		bird.gravity() 
-		bird.flyng()
+		bird.flapWings()
 		floor.moving()
+		bird.collison()
 
 		},
 		click() {
@@ -222,20 +257,20 @@ const screens = {
 
 		},
 		efects() {
-		// efeitos
-		bird.flyng()
+		bird.flapWings()
 		floor.moving()
 
 		},
 		click() {
 			changeScreen(screens.game)
-			t = 0
+			bird.jump()
 		}
 		
 	},
 	gameOver: {
 		draw() {
 		// desenha
+		gameOver.draw()
 		scoreBoard.draw()
 		medal.draw()
 		medal.result()
@@ -254,14 +289,13 @@ const screens = {
 
 //// LOOP ////
 
+
+
 function loop() {
-	t += 1 // tempo passando 
 	screenOn.draw()
 	screenOn.efects()
 	requestAnimationFrame(loop)
-	if (bird.Yp >= (canvas.height - floor.h - 10)) {
-		changeScreen(screens.gameOver)
-	}
+	frames += 1
 }
 
 //// END LOOP ////
@@ -271,7 +305,6 @@ window.addEventListener('click',function(){
 	if (screenOn.click) {
 		screenOn.click()
 	}
-	
 })
 
 changeScreen(screens.start)
